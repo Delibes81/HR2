@@ -81,9 +81,9 @@ export function HowItWorks() {
   useEffect(() => {
     const interval = setInterval(() => {
       setActiveId((prevId) => (prevId % steps.length) + 1);
-    }, 4000); // Change step every 4 seconds
+    }, 4000);
 
-    return () => clearInterval(interval); // Cleanup interval on component unmount
+    return () => clearInterval(interval);
   }, []);
 
   return (
@@ -112,43 +112,54 @@ export function HowItWorks() {
           </p>
         </div>
 
-        {/* Steps Grid - Adjusted for 5 in a line */}
+        {/* Steps Grid */}
         <div className="flex flex-col lg:flex-row justify-center items-center lg:items-start gap-8 lg:gap-4 relative w-full">
 
           {steps.map((step, index) => {
             const isActive = activeId === step.id;
+            /* 
+              CHANGED: 
+              - Parent: transition-transform only (avoids conflicts)
+              - Gradient Layer: ease-out (starts FAST)
+              - Removed general transition-all which can cause delays
+            */
             return (
               <div
                 key={step.id}
                 className={cn(
-                  "group relative flex flex-col items-center justify-center transition-all duration-1000 ease-in-out",
-                  isActive ? "scale-100 z-20" : "scale-90 opacity-60 hover:opacity-100 hover:scale-95",
-                  "w-60 h-60 shrink-0" // Slightly smaller base size to fit 5
+                  "group relative flex flex-col items-center justify-center transition-transform duration-700 ease-[cubic-bezier(0.25,0.1,0.25,1)]", // Smoother custom bezier
+                  isActive ? "scale-100 z-20" : "scale-90 opacity-80 hover:opacity-100 hover:scale-95", // Increased base opacity to avoid flickering
+                  "w-60 h-60 shrink-0"
                 )}
               >
                 {/* Circular Card Container */}
                 <div
                   className={cn(
-                    "w-full h-full rounded-full p-4 flex flex-col items-center justify-center text-center backdrop-blur-md border border-white/20 transition-all duration-700 relative overflow-visible", // overflow-visible for badge
-                    isActive ? "shadow-[0_0_50px_rgba(255,255,255,0.15)] border-white/40" : "bg-white/5 hover:bg-white/10"
+                    "w-full h-full rounded-full p-4 flex flex-col items-center justify-center text-center backdrop-blur-md border transition-colors duration-500 relative overflow-visible z-10",
+                    isActive ? "border-white/40 shadow-[0_0_30px_rgba(255,255,255,0.1)]" : "bg-white/5 border-white/10 hover:bg-white/10"
                   )}
-                  style={{
-                    background: isActive
-                      ? `radial-gradient(circle, ${step.rawColor}20 0%, transparent 70%), rgba(255,255,255,0.1)` // Elegant subtle radial gradient
-                      : undefined
-                  }}
                 >
-
-                  {/* Number Badge - Top Center, Half-in Half-out */}
+                  {/* Active Gradient Background Layer */}
                   <div
-                    className="absolute -top-3 left-1/2 -translate-x-1/2 w-9 h-9 rounded-full flex items-center justify-center font-bold text-white shadow-md z-30 text-sm ring-4 ring-neutral-900/10"
+                    className={cn(
+                      "absolute inset-0 rounded-full transition-opacity duration-500 ease-out -z-10", // Faster (500ms) and ease-out (starts fast)
+                      isActive ? "opacity-100" : "opacity-0"
+                    )}
+                    style={{
+                      background: `radial-gradient(circle, ${step.rawColor}30 0%, transparent 70%), rgba(255,255,255,0.1)`
+                    }}
+                  ></div>
+
+                  {/* Number Badge */}
+                  <div
+                    className="absolute -top-3 left-1/2 -translate-x-1/2 w-9 h-9 rounded-full flex items-center justify-center font-bold text-white shadow-md z-30 text-sm ring-4 ring-neutral-900/10 transition-transform duration-500"
                     style={{ backgroundColor: step.rawColor }}
                   >
                     {step.number}
                   </div>
 
                   {/* Icon */}
-                  <div className="mb-2 mt-2 relative w-12 h-12 flex items-center justify-center shrink-0">
+                  <div className="mb-2 mt-2 relative w-12 h-12 flex items-center justify-center shrink-0 z-20">
                     <div className="relative z-10 drop-shadow-md">
                       {step.iconUrl ? (
                         <Image
@@ -165,8 +176,8 @@ export function HowItWorks() {
                   </div>
 
                   {/* Text Content */}
-                  <div className="flex flex-col items-center justify-center w-full px-1">
-                    <p className="text-xs text-white/90 leading-tight font-light">
+                  <div className="flex flex-col items-center justify-center w-full px-1 z-20">
+                    <p className="text-xs text-white/90 leading-tight font-light transition-colors duration-300">
                       {step.lines.map((line, idx) => (
                         <span
                           key={idx}
@@ -175,7 +186,6 @@ export function HowItWorks() {
                             line.highlight && isActive ? "font-bold mt-1 mb-1 tracking-wide" : "",
                             line.highlight && !isActive ? "font-medium" : ""
                           )}
-                          // Apply color directly to text if highlighted
                           style={line.highlight && isActive ? { color: step.rawColor } : {}}
                         >
                           {line.text}
