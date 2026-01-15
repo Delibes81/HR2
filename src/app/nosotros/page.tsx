@@ -11,12 +11,12 @@ export default async function NosotrosPage() {
   return (
     <div className="bg-background text-foreground">
       {/* Hero Section */}
-      <section className="relative h-80 w-full">
+      <section className="relative h-80 w-full bg-black">
         <Image
-          src="https://placehold.co/1920x600?text=Team+Hero"
+          src="/images/about_hero.jpg"
           alt="Nuestro equipo en Holy Remedies"
           fill
-          className="object-cover"
+          className="object-contain"
           priority
         />
       </section>
