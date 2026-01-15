@@ -75,7 +75,6 @@ const steps = [
   },
 ];
 
-
 export function HowItWorks() {
   const [activeId, setActiveId] = useState<number>(1);
 
@@ -87,137 +86,110 @@ export function HowItWorks() {
     return () => clearInterval(interval); // Cleanup interval on component unmount
   }, []);
 
-
   return (
     <section
-      className="relative w-full py-16 md:py-24 lg:py-32 overflow-hidden bg-cover bg-center"
+      className="relative w-full py-20 md:py-32 overflow-hidden bg-cover bg-center"
       style={{ backgroundImage: "url('https://placehold.co/1920x1080?text=Background')" }}
     >
-      <div className="absolute inset-0 bg-black/50 z-0"></div>
+      <div className="absolute inset-0 bg-neutral-900/60 z-0 backdrop-blur-[2px]"></div>
       <div className="relative container mx-auto px-4 md:px-6 z-10">
-        {/* Mat Frame */}
-        <div className="bg-background/70 p-2 md:p-4 rounded-xl shadow-lg">
-          <div className="bg-background rounded-lg p-6 md:p-10">
-            <div className="text-center mb-12 md:mb-20">
-              <div className="flex justify-center mb-4">
-                <Image
-                  src="https://placehold.co/400x114?text=Estas+Crudito"
-                  alt="¿Estás crudito?"
-                  width={400}
-                  height={114}
-                />
-              </div>
-              <p className="mt-4 max-w-3xl mx-auto text-muted-foreground md:text-lg">
-                Holy Moly es un boost para tu cuerpo diseñado específicamente para cuando las cosas se salen de control.
-              </p>
-            </div>
 
-            {/* Desktop Layout - Horizontal */}
-            <div className="hidden md:flex justify-center items-start gap-4 lg:gap-0 flex-wrap">
-              {steps.map((step, index) => (
+        {/* Header Section */}
+        <div className="text-center mb-12 lg:mb-20">
+          <div className="flex justify-center mb-6">
+            <div className="relative">
+              <Image
+                src="https://placehold.co/400x114?text=Estas+Crudito"
+                alt="¿Estás crudito?"
+                width={400}
+                height={114}
+                className="drop-shadow-lg"
+              />
+            </div>
+          </div>
+          <p className="mt-6 max-w-2xl mx-auto text-white/90 text-lg md:text-xl font-light leading-relaxed">
+            Holy Moly es un boost para tu cuerpo diseñado específicamente para cuando las cosas se salen de control.
+          </p>
+        </div>
+
+        {/* Steps Grid - Adjusted for 5 in a line */}
+        <div className="flex flex-col lg:flex-row justify-center items-center lg:items-start gap-8 lg:gap-4 relative w-full">
+
+          {steps.map((step, index) => {
+            const isActive = activeId === step.id;
+            return (
+              <div
+                key={step.id}
+                className={cn(
+                  "group relative flex flex-col items-center justify-center transition-all duration-1000 ease-in-out",
+                  isActive ? "scale-100 z-20" : "scale-90 opacity-60 hover:opacity-100 hover:scale-95",
+                  "w-60 h-60 shrink-0" // Slightly smaller base size to fit 5
+                )}
+              >
+                {/* Circular Card Container */}
                 <div
-                  key={step.id}
                   className={cn(
-                    "relative flex flex-col items-center group w-56",
-                    index > 0 && "lg:-ml-10" // Overlap on large screens
+                    "w-full h-full rounded-full p-4 flex flex-col items-center justify-center text-center backdrop-blur-md border border-white/20 transition-all duration-700 relative overflow-visible", // overflow-visible for badge
+                    isActive ? "shadow-[0_0_50px_rgba(255,255,255,0.15)] border-white/40" : "bg-white/5 hover:bg-white/10"
                   )}
+                  style={{
+                    background: isActive
+                      ? `radial-gradient(circle, ${step.rawColor}20 0%, transparent 70%), rgba(255,255,255,0.1)` // Elegant subtle radial gradient
+                      : undefined
+                  }}
                 >
-                  {/* Text block + Connector */}
-                  <div className="h-48 flex flex-col items-center justify-end text-center">
-                    <div className={cn(
-                      "transition-opacity duration-500 px-2",
-                      activeId === step.id ? "opacity-100" : "opacity-0"
-                    )}>
-                      <p className="text-sm text-muted-foreground leading-tight mt-1 min-h-[5.5rem]">
-                        {step.lines.map((line, index) => (
-                          <span key={index} className={cn(line.highlight && `font-bold uppercase ${step.textColor}`)}>
-                            {line.text}
-                          </span>
-                        ))}
-                      </p>
-                    </div>
-                    <div className="w-1.5 h-16 mt-4" style={{ backgroundColor: step.rawColor }}></div>
-                    <div className="w-3 h-3 rounded-full -mt-1.5" style={{ backgroundColor: step.rawColor }}></div>
+
+                  {/* Number Badge - Top Center, Half-in Half-out */}
+                  <div
+                    className="absolute -top-3 left-1/2 -translate-x-1/2 w-9 h-9 rounded-full flex items-center justify-center font-bold text-white shadow-md z-30 text-sm ring-4 ring-neutral-900/10"
+                    style={{ backgroundColor: step.rawColor }}
+                  >
+                    {step.number}
                   </div>
 
-                  {/* The circle */}
-                  <div className="relative w-40 h-40 flex items-center justify-center">
-                    <div className={cn(
-                      "absolute w-full h-full rounded-full transition-all duration-500 ease-in-out flex items-center justify-center",
-                      step.color,
-                      activeId === step.id ? 'scale-110' : 'scale-100'
-                    )}>
-                      <div className={cn(
-                        "w-[85%] h-[85%] rounded-full",
-                        step.darkerColor
-                      )}></div>
-                    </div>
-                    <div className={cn("absolute pointer-events-none flex items-center justify-center")}>
+                  {/* Icon */}
+                  <div className="mb-2 mt-2 relative w-12 h-12 flex items-center justify-center shrink-0">
+                    <div className="relative z-10 drop-shadow-md">
                       {step.iconUrl ? (
-                        <Image src={step.iconUrl} alt={`Step ${step.id} icon`} width={70} height={70} className="object-contain" />
+                        <Image
+                          src={step.iconUrl}
+                          alt={`Paso ${step.number}`}
+                          width={48}
+                          height={48}
+                          className="object-contain"
+                        />
                       ) : (
-                        <span className="text-white font-bold text-5xl">{step.number}</span>
+                        <span className="text-white font-bold text-2xl">{step.number}</span>
                       )}
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
 
-            {/* Mobile Layout - Vertical */}
-            <div className="md:hidden">
-              <div className="grid grid-cols-1 gap-12">
-                {steps.map((step) => (
-                  <div key={step.id} className="flex flex-col items-center text-center">
-                    <div className="h-44">
-                      <div className={cn(
-                        'transition-opacity duration-500',
-                        activeId === step.id ? 'opacity-100' : 'opacity-0'
-                      )}>
-                        {/* Text block */}
-                        <div className="w-full px-4">
-                          <p className="text-sm text-muted-foreground leading-tight mt-1">
-                            {step.lines.map((line, index) => (
-                              <span key={index} className={cn(line.highlight && `font-bold uppercase ${step.textColor}`)}>
-                                {line.text}
-                              </span>
-                            ))}
-                          </p>
-                        </div>
-
-                        {/* Connector */}
-                        <div className="w-1.5 h-16 my-3 mx-auto" style={{ backgroundColor: step.rawColor }}></div>
-                      </div>
-                    </div>
-
-                    {/* Circle */}
-                    <div
-                      className="relative w-36 h-36 flex items-center justify-center"
-                    >
-                      <div className={cn(
-                        "absolute w-full h-full rounded-full flex items-center justify-center transition-all duration-500 ease-in-out",
-                        step.color,
-                        activeId === step.id ? 'scale-110' : 'scale-100'
-                      )}>
-                        <div className={cn(
-                          "w-[85%] h-[85%] rounded-full",
-                          step.darkerColor
-                        )}></div>
-                      </div>
-                      <div className={cn("absolute pointer-events-none flex items-center justify-center")}>
-                        {step.iconUrl ? (
-                          <Image src={step.iconUrl} alt={`Step ${step.id} icon`} width={63} height={63} className="object-contain" />
-                        ) : (
-                          <span className="text-white font-bold text-4xl">{step.number}</span>
-                        )}
-                      </div>
-                    </div>
+                  {/* Text Content */}
+                  <div className="flex flex-col items-center justify-center w-full px-1">
+                    <p className="text-xs text-white/90 leading-tight font-light">
+                      {step.lines.map((line, idx) => (
+                        <span
+                          key={idx}
+                          className={cn(
+                            "block",
+                            line.highlight && isActive ? "font-bold mt-1 mb-1 tracking-wide" : "",
+                            line.highlight && !isActive ? "font-medium" : ""
+                          )}
+                          // Apply color directly to text if highlighted
+                          style={line.highlight && isActive ? { color: step.rawColor } : {}}
+                        >
+                          {line.text}
+                        </span>
+                      ))}
+                    </p>
                   </div>
-                ))}
+
+                </div>
               </div>
-            </div>
-          </div>
+            );
+          })}
         </div>
+
       </div>
     </section>
   );
