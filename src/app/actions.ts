@@ -2,31 +2,15 @@
 "use server";
 
 import { z } from 'zod';
-import { db, storage } from '@/lib/firebase';
-import { collection, getDocs, addDoc, doc, updateDoc, deleteDoc, setDoc, query, where, getDoc } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { revalidatePath } from 'next/cache';
-import type { Product, BlogPost, Metric, PromoBanner, CartItem } from '@/lib/types';
+import { db } from '@/lib/firebase';
+import { collection, getDocs, addDoc, query, where } from 'firebase/firestore';
+// import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'; // Unused
+import type { CartItem } from '@/lib/types';
 import { onSnapshot } from "firebase/firestore";
 
 // --- Helper Functions ---
+// (No helper functions currently needed for server actions)
 
-async function uploadFile(file: File, path: string): Promise<string> {
-  if (!storage) throw new Error("Firebase Storage no está configurado.");
-  const storageRef = ref(storage, `${path}/${Date.now()}-${file.name}`);
-  const snapshot = await uploadBytes(storageRef, file);
-  return await getDownloadURL(snapshot.ref);
-}
-
-
-// --- Helper Functions ---
-
-async function uploadFile(file: File, path: string): Promise<string> {
-  if (!storage) throw new Error("Firebase Storage no está configurado.");
-  const storageRef = ref(storage, `${path}/${Date.now()}-${file.name}`);
-  const snapshot = await uploadBytes(storageRef, file);
-  return await getDownloadURL(snapshot.ref);
-}
 
 // CRUD Actions removed in favor of Client-Side writes.
 
