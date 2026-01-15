@@ -24,8 +24,8 @@ const steps = [
     number: "02",
     iconUrl: "https://firebasestorage.googleapis.com/v0/b/holy-remedies.firebasestorage.app/o/transformado_2.png?alt=media&token=5669d3db-2a08-4e13-9827-fab1546456cd",
     lines: [
-        { text: "TRANSFORMANDO ", highlight: true },
-        { text: "el alcohol en sustancias menos tóxicas" },
+      { text: "TRANSFORMANDO ", highlight: true },
+      { text: "el alcohol en sustancias menos tóxicas" },
     ],
     color: "bg-[#A076F5]",
     textColor: "text-[#A076F5]",
@@ -89,9 +89,9 @@ export function HowItWorks() {
 
 
   return (
-    <section 
-        className="relative w-full py-16 md:py-24 lg:py-32 overflow-hidden bg-cover bg-center"
-        style={{ backgroundImage: "url('https://firebasestorage.googleapis.com/v0/b/holy-remedies.firebasestorage.app/o/Clip%20path%20group(1).png?alt=media&token=e191e2f3-36b0-4b70-8112-5da6f8a8d07c')" }}
+    <section
+      className="relative w-full py-16 md:py-24 lg:py-32 overflow-hidden bg-cover bg-center"
+      style={{ backgroundImage: "url('https://placehold.co/1920x1080?text=Background')" }}
     >
       <div className="absolute inset-0 bg-black/50 z-0"></div>
       <div className="relative container mx-auto px-4 md:px-6 z-10">
@@ -101,120 +101,120 @@ export function HowItWorks() {
             <div className="text-center mb-12 md:mb-20">
               <div className="flex justify-center mb-4">
                 <Image
-                  src="https://firebasestorage.googleapis.com/v0/b/holy-remedies.firebasestorage.app/o/ESTASCRUDITO(1).png?alt=media&token=a6eba470-eed5-4dd4-8a82-cd0bba4c1eb3"
+                  src="https://placehold.co/400x114?text=Estas+Crudito"
                   alt="¿Estás crudito?"
                   width={400}
                   height={114}
                 />
               </div>
               <p className="mt-4 max-w-3xl mx-auto text-muted-foreground md:text-lg">
-                  Holy Moly es un boost para tu cuerpo diseñado específicamente para cuando las cosas se salen de control.
+                Holy Moly es un boost para tu cuerpo diseñado específicamente para cuando las cosas se salen de control.
               </p>
             </div>
 
             {/* Desktop Layout - Horizontal */}
             <div className="hidden md:flex justify-center items-start gap-4 lg:gap-0 flex-wrap">
-                {steps.map((step, index) => (
-                    <div 
-                        key={step.id}
-                        className={cn(
-                            "relative flex flex-col items-center group w-56",
-                            index > 0 && "lg:-ml-10" // Overlap on large screens
-                        )}
-                    >
-                        {/* Text block + Connector */}
-                        <div className="h-48 flex flex-col items-center justify-end text-center">
-                            <div className={cn(
-                                "transition-opacity duration-500 px-2",
-                                activeId === step.id ? "opacity-100" : "opacity-0"
-                            )}>
-                                <p className="text-sm text-muted-foreground leading-tight mt-1 min-h-[5.5rem]">
-                                    {step.lines.map((line, index) => (
-                                        <span key={index} className={cn(line.highlight && `font-bold uppercase ${step.textColor}`)}>
-                                            {line.text}
-                                        </span>
-                                    ))}
-                                </p>
-                            </div>
-                            <div className="w-1.5 h-16 mt-4" style={{backgroundColor: step.rawColor}}></div>
-                            <div className="w-3 h-3 rounded-full -mt-1.5" style={{backgroundColor: step.rawColor}}></div>
-                        </div>
-                        
-                        {/* The circle */}
-                        <div className="relative w-40 h-40 flex items-center justify-center">
-                            <div className={cn(
-                                "absolute w-full h-full rounded-full transition-all duration-500 ease-in-out flex items-center justify-center", 
-                                step.color, 
-                                activeId === step.id ? 'scale-110' : 'scale-100'
-                            )}>
-                                    <div className={cn(
-                                    "w-[85%] h-[85%] rounded-full",
-                                    step.darkerColor
-                                )}></div>
-                            </div>
-                            <div className={cn("absolute pointer-events-none flex items-center justify-center")}>
-                                {step.iconUrl ? (
-                                    <Image src={step.iconUrl} alt={`Step ${step.id} icon`} width={70} height={70} className="object-contain" />
-                                ) : (
-                                    <span className="text-white font-bold text-5xl">{step.number}</span>
-                                )}
-                            </div>
-                        </div>
+              {steps.map((step, index) => (
+                <div
+                  key={step.id}
+                  className={cn(
+                    "relative flex flex-col items-center group w-56",
+                    index > 0 && "lg:-ml-10" // Overlap on large screens
+                  )}
+                >
+                  {/* Text block + Connector */}
+                  <div className="h-48 flex flex-col items-center justify-end text-center">
+                    <div className={cn(
+                      "transition-opacity duration-500 px-2",
+                      activeId === step.id ? "opacity-100" : "opacity-0"
+                    )}>
+                      <p className="text-sm text-muted-foreground leading-tight mt-1 min-h-[5.5rem]">
+                        {step.lines.map((line, index) => (
+                          <span key={index} className={cn(line.highlight && `font-bold uppercase ${step.textColor}`)}>
+                            {line.text}
+                          </span>
+                        ))}
+                      </p>
                     </div>
-                ))}
+                    <div className="w-1.5 h-16 mt-4" style={{ backgroundColor: step.rawColor }}></div>
+                    <div className="w-3 h-3 rounded-full -mt-1.5" style={{ backgroundColor: step.rawColor }}></div>
+                  </div>
+
+                  {/* The circle */}
+                  <div className="relative w-40 h-40 flex items-center justify-center">
+                    <div className={cn(
+                      "absolute w-full h-full rounded-full transition-all duration-500 ease-in-out flex items-center justify-center",
+                      step.color,
+                      activeId === step.id ? 'scale-110' : 'scale-100'
+                    )}>
+                      <div className={cn(
+                        "w-[85%] h-[85%] rounded-full",
+                        step.darkerColor
+                      )}></div>
+                    </div>
+                    <div className={cn("absolute pointer-events-none flex items-center justify-center")}>
+                      {step.iconUrl ? (
+                        <Image src={step.iconUrl} alt={`Step ${step.id} icon`} width={70} height={70} className="object-contain" />
+                      ) : (
+                        <span className="text-white font-bold text-5xl">{step.number}</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
-            
+
             {/* Mobile Layout - Vertical */}
             <div className="md:hidden">
-                <div className="grid grid-cols-1 gap-12">
-                    {steps.map((step) => (
-                          <div key={step.id} className="flex flex-col items-center text-center">
-                            <div className="h-44">
-                                <div className={cn(
-                                    'transition-opacity duration-500', 
-                                    activeId === step.id ? 'opacity-100' : 'opacity-0'
-                                )}>
-                                    {/* Text block */}
-                                    <div className="w-full px-4">
-                                        <p className="text-sm text-muted-foreground leading-tight mt-1">
-                                            {step.lines.map((line, index) => (
-                                                <span key={index} className={cn(line.highlight && `font-bold uppercase ${step.textColor}`)}>
-                                                    {line.text}
-                                                </span>
-                                            ))}
-                                        </p>
-                                    </div>
-                    
-                                    {/* Connector */}
-                                    <div className="w-1.5 h-16 my-3 mx-auto" style={{backgroundColor: step.rawColor}}></div>
-                                </div>
-                            </div>
-            
-                            {/* Circle */}
-                            <div
-                                className="relative w-36 h-36 flex items-center justify-center"
-                            >
-                                <div className={cn(
-                                    "absolute w-full h-full rounded-full flex items-center justify-center transition-all duration-500 ease-in-out", 
-                                    step.color,
-                                    activeId === step.id ? 'scale-110' : 'scale-100'
-                                )}>
-                                    <div className={cn(
-                                        "w-[85%] h-[85%] rounded-full",
-                                        step.darkerColor
-                                    )}></div>
-                                </div>
-                                <div className={cn("absolute pointer-events-none flex items-center justify-center")}>
-                                    {step.iconUrl ? (
-                                        <Image src={step.iconUrl} alt={`Step ${step.id} icon`} width={63} height={63} className="object-contain" />
-                                    ) : (
-                                        <span className="text-white font-bold text-4xl">{step.number}</span>
-                                    )}
-                                </div>
-                            </div>
+              <div className="grid grid-cols-1 gap-12">
+                {steps.map((step) => (
+                  <div key={step.id} className="flex flex-col items-center text-center">
+                    <div className="h-44">
+                      <div className={cn(
+                        'transition-opacity duration-500',
+                        activeId === step.id ? 'opacity-100' : 'opacity-0'
+                      )}>
+                        {/* Text block */}
+                        <div className="w-full px-4">
+                          <p className="text-sm text-muted-foreground leading-tight mt-1">
+                            {step.lines.map((line, index) => (
+                              <span key={index} className={cn(line.highlight && `font-bold uppercase ${step.textColor}`)}>
+                                {line.text}
+                              </span>
+                            ))}
+                          </p>
                         </div>
-                    ))}
-                </div>
+
+                        {/* Connector */}
+                        <div className="w-1.5 h-16 my-3 mx-auto" style={{ backgroundColor: step.rawColor }}></div>
+                      </div>
+                    </div>
+
+                    {/* Circle */}
+                    <div
+                      className="relative w-36 h-36 flex items-center justify-center"
+                    >
+                      <div className={cn(
+                        "absolute w-full h-full rounded-full flex items-center justify-center transition-all duration-500 ease-in-out",
+                        step.color,
+                        activeId === step.id ? 'scale-110' : 'scale-100'
+                      )}>
+                        <div className={cn(
+                          "w-[85%] h-[85%] rounded-full",
+                          step.darkerColor
+                        )}></div>
+                      </div>
+                      <div className={cn("absolute pointer-events-none flex items-center justify-center")}>
+                        {step.iconUrl ? (
+                          <Image src={step.iconUrl} alt={`Step ${step.id} icon`} width={63} height={63} className="object-contain" />
+                        ) : (
+                          <span className="text-white font-bold text-4xl">{step.number}</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>

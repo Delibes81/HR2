@@ -13,7 +13,7 @@ export default async function NosotrosPage() {
       {/* Hero Section */}
       <section className="relative h-80 w-full">
         <Image
-          src="https://firebasestorage.googleapis.com/v0/b/holy-remedies.firebasestorage.app/o/holymoly_N(2).jpg?alt=media&token=676e7bce-4bcc-4c29-b64b-25dd946ab1f5"
+          src="https://placehold.co/1920x600?text=Team+Hero"
           alt="Nuestro equipo en Holy Remedies"
           fill
           className="object-cover"

@@ -32,65 +32,65 @@ export function SiteHeader() {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-3">
         {/* Top row: Logo, Actions */}
         <div className="flex h-20 items-center">
-            {/* Left Section: Spacer */}
-            <div className="flex-1 flex justify-start">
-                {/* This div is a spacer to keep the logo centered */}
-            </div>
+          {/* Left Section: Spacer */}
+          <div className="flex-1 flex justify-start">
+            {/* This div is a spacer to keep the logo centered */}
+          </div>
 
-            {/* Center Section: Logo */}
-            <div className="flex-1 flex justify-center">
-              <Link href="/">
-                <img
-                  src="https://firebasestorage.googleapis.com/v0/b/holy-remedies.firebasestorage.app/o/Capa_1.svg?alt=media&token=7a5a7ccb-3bba-4771-8a79-249c423166c9"
-                  alt="Holy Remedies Logo"
-                  width={176}
-                  height={44}
-                  style={{ height: '44px', width: 'auto' }}
-                />
+          {/* Center Section: Logo */}
+          <div className="flex-1 flex justify-center">
+            <Link href="/">
+              <img
+                src="https://placehold.co/176x44?text=Holy+Remedies"
+                alt="Holy Remedies Logo"
+                width={176}
+                height={44}
+                style={{ height: '44px', width: 'auto' }}
+              />
+            </Link>
+          </div>
+
+          {/* Right Section: Cart */}
+          <div className="flex flex-1 items-center justify-end space-x-2">
+            <Button asChild variant="ghost" size="icon" className="relative">
+              <Link href="/carrito">
+                <ShoppingCart className="h-7 w-7" />
+                {isMounted && cartCount > 0 && (
+                  <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-accent text-accent-foreground text-xs font-bold">
+                    {cartCount}
+                  </span>
+                )}
+                <span className="sr-only">Carrito de compras</span>
               </Link>
-            </div>
-
-            {/* Right Section: Cart */}
-            <div className="flex flex-1 items-center justify-end space-x-2">
-                <Button asChild variant="ghost" size="icon" className="relative">
-                  <Link href="/carrito">
-                    <ShoppingCart className="h-7 w-7" />
-                    {isMounted && cartCount > 0 && (
-                      <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-accent text-accent-foreground text-xs font-bold">
-                        {cartCount}
-                      </span>
-                    )}
-                    <span className="sr-only">Carrito de compras</span>
-                  </Link>
-                </Button>
-            </div>
+            </Button>
+          </div>
         </div>
-        
+
         {/* Bottom row: Navigation Links */}
         <nav className="flex justify-center pt-4 pb-2">
-            <div className="flex gap-8 items-center">
-              {navItems.map((item) => {
-                const isActive = item.href !== "#" && pathname.startsWith(item.href) && (item.href !== '/' || pathname === '/');
-                return (
-                  <div key={item.label} className="relative flex flex-col items-center">
-                    <Image
-                      src="https://firebasestorage.googleapis.com/v0/b/holy-remedies.firebasestorage.app/o/halo.png?alt=media&token=ce72b8ad-f32b-43f6-ae62-2df4a1ddad4e"
-                      alt="Active page indicator"
-                      width={20}
-                      height={0}
-                      className={cn(
-                        "absolute -top-2 transition-opacity",
-                        isActive ? "opacity-100" : "opacity-0"
-                      )}
-                      unoptimized
-                    />
-                    <Link href={item.href} className="text-base font-medium text-foreground hover:text-primary transition-colors">
-                      {item.label}
-                    </Link>
-                  </div>
-                )
-              })}
-            </div>
+          <div className="flex gap-8 items-center">
+            {navItems.map((item) => {
+              const isActive = item.href !== "#" && pathname.startsWith(item.href) && (item.href !== '/' || pathname === '/');
+              return (
+                <div key={item.label} className="relative flex flex-col items-center">
+                  <Image
+                    src="https://placehold.co/20x20?text=O"
+                    alt="Active page indicator"
+                    width={20}
+                    height={0}
+                    className={cn(
+                      "absolute -top-2 transition-opacity",
+                      isActive ? "opacity-100" : "opacity-0"
+                    )}
+                    unoptimized
+                  />
+                  <Link href={item.href} className="text-base font-medium text-foreground hover:text-primary transition-colors">
+                    {item.label}
+                  </Link>
+                </div>
+              )
+            })}
+          </div>
         </nav>
       </div>
     </header>

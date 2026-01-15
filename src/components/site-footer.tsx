@@ -8,11 +8,11 @@ export function SiteFooter() {
     <footer className="border-t bg-background">
       <div className="container mx-auto py-10 px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center text-muted-foreground">
-          
+
           <div className="md:col-span-2 flex justify-center md:justify-start">
             <Link href="/">
               <Image
-                src="https://firebasestorage.googleapis.com/v0/b/holy-remedies.firebasestorage.app/o/Layer_1.png?alt=media&token=a81cf287-9b76-4cb6-9451-810bb77e1df5"
+                src="https://placehold.co/100x100?text=HR"
                 alt="Holy Moly Logo"
                 width={100}
                 height={100}
@@ -59,16 +59,16 @@ export function SiteFooter() {
               </div>
             </div>
           </div>
-          
+
           <div className="md:col-span-2 flex justify-center md:justify-end">
             <Link href="/login" title="Admin Login">
-                <img
-                  src="https://firebasestorage.googleapis.com/v0/b/holy-remedies.firebasestorage.app/o/Capa_1.svg?alt=media&token=7a5a7ccb-3bba-4771-8a79-249c423166c9"
-                  alt="Holy Remedies Logo"
-                  width={120}
-                  height={30}
-                  style={{ height: '30px', width: 'auto' }}
-                />
+              <img
+                src="https://placehold.co/120x30?text=Holy+Remedies"
+                alt="Holy Remedies Logo"
+                width={120}
+                height={30}
+                style={{ height: '30px', width: 'auto' }}
+              />
             </Link>
           </div>
         </div>
