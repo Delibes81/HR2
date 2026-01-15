@@ -88,10 +88,10 @@ export function HowItWorks() {
 
   return (
     <section
-      className="relative w-full py-20 md:py-32 overflow-hidden bg-cover bg-center"
-      style={{ backgroundImage: "url('https://placehold.co/1920x1080?text=Background')" }}
+      className="relative w-full py-20 md:py-32 overflow-hidden"
+      style={{ backgroundColor: '#252525' }}
     >
-      <div className="absolute inset-0 bg-neutral-900/60 z-0 backdrop-blur-[2px]"></div>
+      {/* <div className="absolute inset-0 bg-neutral-900/80 z-0 backdrop-blur-[2px]"></div> */}
       <div className="relative container mx-auto px-4 md:px-6 z-10">
 
         {/* Header Section */}
