@@ -4,9 +4,11 @@
 import { useEffect, useState, useRef } from "react";
 import type { Product, Category } from "@/lib/types";
 import { getProducts, getAdminCategories } from "@/lib/products";
-import { saveProduct, deleteProduct } from "@/app/actions";
+// import { saveProduct, deleteProduct } from "@/app/actions";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
+import { db, uploadFile } from "@/lib/firebase";
+import { collection, addDoc, updateDoc, deleteDoc, doc } from "firebase/firestore";
 import {
   Table,
   TableBody,
@@ -25,15 +27,15 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-    AlertDialogTrigger,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
@@ -81,7 +83,7 @@ function ProductForm({
   const removeExistingImage = (index: number) => {
     setExistingImages(prev => prev.filter((_, i) => i !== index));
   };
-  
+
   const removeNewImage = (index: number) => {
     setNewImageFiles(prev => prev.filter((_, i) => i !== index));
     setNewImagePreviews(prev => prev.filter((_, i) => i !== index));
@@ -89,78 +91,78 @@ function ProductForm({
 
   return (
     <form ref={formRef} onSubmit={handleSubmit} className="space-y-4 max-h-[80vh] overflow-y-auto p-1 pr-4">
-        {product?.id && <input type="hidden" name="id" value={product.id} />}
-      
+      {product?.id && <input type="hidden" name="id" value={product.id} />}
+
+      <div className="space-y-2">
+        <Label htmlFor="name">Nombre</Label>
+        <Input id="name" name="name" defaultValue={product?.name ?? ''} required />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="description">Descripción</Label>
+        <Textarea id="description" name="description" defaultValue={product?.description ?? ''} required />
+      </div>
+      <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-            <Label htmlFor="name">Nombre</Label>
-            <Input id="name" name="name" defaultValue={product?.name ?? ''} required />
+          <Label htmlFor="price">Precio Real</Label>
+          <Input id="price" name="price" type="number" step="0.01" defaultValue={product?.price ?? 0} required />
         </div>
         <div className="space-y-2">
-            <Label htmlFor="description">Descripción</Label>
-            <Textarea id="description" name="description" defaultValue={product?.description ?? ''} required />
+          <Label htmlFor="promotionalPrice">Precio de Promoción (Opcional)</Label>
+          <Input id="promotionalPrice" name="promotionalPrice" type="number" step="0.01" defaultValue={product?.promotionalPrice ?? 0} />
         </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-              <Label htmlFor="price">Precio Real</Label>
-              <Input id="price" name="price" type="number" step="0.01" defaultValue={product?.price ?? 0} required />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="category">Categoría</Label>
+        <Select name="category" defaultValue={product?.category ?? ''} required>
+          <SelectTrigger id="category">
+            <SelectValue placeholder="Selecciona una categoría" />
+          </SelectTrigger>
+          <SelectContent>
+            {categories.map((cat) => (
+              <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-2">
+        <Label>Imágenes Actuales</Label>
+        {existingImages.length > 0 ? (
+          <div className="grid grid-cols-3 gap-2">
+            {existingImages.map((image, index) => (
+              <div key={index} className="relative">
+                <Image src={image} alt={`Producto ${index + 1}`} width={100} height={100} className="rounded-md object-cover w-full h-24" />
+                <Button type="button" size="icon" variant="destructive" className="absolute top-1 right-1 h-6 w-6" onClick={() => removeExistingImage(index)}>
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            ))}
           </div>
-          <div className="space-y-2">
-              <Label htmlFor="promotionalPrice">Precio de Promoción (Opcional)</Label>
-              <Input id="promotionalPrice" name="promotionalPrice" type="number" step="0.01" defaultValue={product?.promotionalPrice ?? 0} />
+        ) : <p className="text-sm text-muted-foreground">No hay imágenes existentes.</p>}
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="images">Añadir Nuevas Imágenes</Label>
+        <Input id="images" name="images" type="file" accept="image/*" multiple onChange={handleNewImagesChange} />
+      </div>
+
+      {newImagePreviews.length > 0 && (
+        <div className="space-y-2">
+          <Label>Previsualización de Nuevas Imágenes</Label>
+          <div className="grid grid-cols-3 gap-2">
+            {newImagePreviews.map((preview, index) => (
+              <div key={index} className="relative">
+                <Image src={preview} alt={`Nueva imagen ${index + 1}`} width={100} height={100} className="rounded-md object-cover w-full h-24" />
+                <Button type="button" size="icon" variant="destructive" className="absolute top-1 right-1 h-6 w-6" onClick={() => removeNewImage(index)}>
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            ))}
           </div>
         </div>
-        <div className="space-y-2">
-            <Label htmlFor="category">Categoría</Label>
-            <Select name="category" defaultValue={product?.category ?? ''} required>
-                <SelectTrigger id="category">
-                    <SelectValue placeholder="Selecciona una categoría" />
-                </SelectTrigger>
-                <SelectContent>
-                    {categories.map((cat) => (
-                        <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
-        </div>
+      )}
 
-        <div className="space-y-2">
-          <Label>Imágenes Actuales</Label>
-          {existingImages.length > 0 ? (
-            <div className="grid grid-cols-3 gap-2">
-              {existingImages.map((image, index) => (
-                <div key={index} className="relative">
-                  <Image src={image} alt={`Producto ${index + 1}`} width={100} height={100} className="rounded-md object-cover w-full h-24" />
-                  <Button type="button" size="icon" variant="destructive" className="absolute top-1 right-1 h-6 w-6" onClick={() => removeExistingImage(index)}>
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
-            </div>
-          ) : <p className="text-sm text-muted-foreground">No hay imágenes existentes.</p>}
-        </div>
-
-        <div className="space-y-2">
-            <Label htmlFor="images">Añadir Nuevas Imágenes</Label>
-            <Input id="images" name="images" type="file" accept="image/*" multiple onChange={handleNewImagesChange} />
-        </div>
-
-        {newImagePreviews.length > 0 && (
-            <div className="space-y-2">
-                <Label>Previsualización de Nuevas Imágenes</Label>
-                <div className="grid grid-cols-3 gap-2">
-                    {newImagePreviews.map((preview, index) => (
-                        <div key={index} className="relative">
-                            <Image src={preview} alt={`Nueva imagen ${index + 1}`} width={100} height={100} className="rounded-md object-cover w-full h-24" />
-                             <Button type="button" size="icon" variant="destructive" className="absolute top-1 right-1 h-6 w-6" onClick={() => removeNewImage(index)}>
-                                <X className="h-4 w-4" />
-                            </Button>
-                        </div>
-                    ))}
-                </div>
-            </div>
-        )}
-       
-        <Button type="submit" disabled={isSubmitting}>{isSubmitting ? "Guardando..." : "Guardar Producto"}</Button>
+      <Button type="submit" disabled={isSubmitting}>{isSubmitting ? "Guardando..." : "Guardar Producto"}</Button>
     </form>
   );
 }
@@ -176,14 +178,14 @@ export function ProductList() {
   const fetchProductsAndCategories = async () => {
     setIsLoading(true);
     try {
-        const [productsData, categoriesData] = await Promise.all([
-            getProducts(),
-            getAdminCategories() 
-        ]);
-        setProducts(productsData);
-        setCategories(categoriesData);
+      const [productsData, categoriesData] = await Promise.all([
+        getProducts(),
+        getAdminCategories()
+      ]);
+      setProducts(productsData);
+      setCategories(categoriesData);
     } catch (error) {
-        toast({ variant: "destructive", title: "Error", description: "No se pudieron cargar los datos." });
+      toast({ variant: "destructive", title: "Error", description: "No se pudieron cargar los datos." });
     }
     setIsLoading(false);
   };
@@ -193,22 +195,63 @@ export function ProductList() {
   }, []);
 
   const handleSaveProduct = async (formData: FormData) => {
-    const result = await saveProduct(formData);
-    if (result.success) {
-      toast({ title: "¡Éxito!", description: "Producto guardado correctamente." });
+    if (!db) return;
+    try {
+      const id = formData.get('id') as string | null;
+      const name = formData.get('name') as string;
+      const description = formData.get('description') as string;
+      const price = parseFloat(formData.get('price') as string);
+      const promotionalPriceVal = formData.get('promotionalPrice');
+      const promotionalPrice = promotionalPriceVal ? parseFloat(promotionalPriceVal as string) : null;
+      const category = formData.get('category') as string;
+      const existingImages = JSON.parse(formData.get('existingImages') as string || '[]') as string[];
+
+      // Handle new images
+      const newImageFiles = formData.getAll('images') as File[];
+      const validNewFiles = newImageFiles.filter(f => f.size > 0);
+
+      let newImageUrls: string[] = [];
+      if (validNewFiles.length > 0) {
+        newImageUrls = await Promise.all(validNewFiles.map(file => uploadFile(file, 'product-images')));
+      }
+
+      const allImages = [...existingImages, ...newImageUrls];
+      if (allImages.length === 0) {
+        allImages.push('https://placehold.co/600x600');
+      }
+
+      const productData = {
+        name,
+        description,
+        price,
+        promotionalPrice,
+        category,
+        images: allImages,
+      };
+
+      if (id) {
+        await updateDoc(doc(db, "products", id), productData);
+        toast({ title: "¡Éxito!", description: "Producto actualizado correctamente." });
+      } else {
+        await addDoc(collection(db, "products"), productData);
+        toast({ title: "¡Éxito!", description: "Producto creado correctamente." });
+      }
       fetchProductsAndCategories();
-    } else {
-      toast({ variant: "destructive", title: "Error", description: result.error });
+    } catch (error) {
+      console.error("Error saving product:", error);
+      toast({ variant: "destructive", title: "Error", description: "No se pudo guardar el producto." });
     }
   };
-  
+
   const handleDeleteProduct = async (id: string) => {
-    const result = await deleteProduct(id);
-    if (result.success) {
-        toast({ title: "¡Éxito!", description: "Producto eliminado correctamente." });
-        fetchProductsAndCategories();
-    } else {
-        toast({ variant: "destructive", title: "Error", description: result.error });
+    if (!db) return;
+    try {
+      await deleteDoc(doc(db, "products", id));
+      toast({ title: "¡Éxito!", description: "Producto eliminado correctamente." });
+      fetchProductsAndCategories();
+    } catch (error) {
+      console.error("Error deleting product:", error);
+      toast({ variant: "destructive", title: "Error", description: "No se pudo eliminar el producto." });
     }
   };
 
@@ -221,22 +264,22 @@ export function ProductList() {
     setEditingProduct(product);
     setIsDialogOpen(true);
   }
-  
+
   if (isLoading) {
     return (
-        <div className="space-y-4">
-            <div className="flex justify-end">
-                <Skeleton className="h-10 w-36" />
-            </div>
-            <Skeleton className="h-96 w-full" />
+      <div className="space-y-4">
+        <div className="flex justify-end">
+          <Skeleton className="h-10 w-36" />
         </div>
+        <Skeleton className="h-96 w-full" />
+      </div>
     );
   }
 
   return (
     <div>
       <div className="flex justify-end mb-4">
-        <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if(!open) setEditingProduct(undefined)}}>
+        <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) setEditingProduct(undefined) }}>
           <DialogTrigger asChild>
             <Button onClick={openNewProductDialog}>Añadir Producto</Button>
           </DialogTrigger>
@@ -275,23 +318,23 @@ export function ProductList() {
                   <Edit className="h-4 w-4" />
                 </Button>
                 <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                        <AlertDialogHeader>
-                        <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            Esta acción no se puede deshacer. Esto eliminará permanentemente el producto.
-                        </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => handleDeleteProduct(product.id)}>Continuar</AlertDialogAction>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="ghost" size="icon">
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Esta acción no se puede deshacer. Esto eliminará permanentemente el producto.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => handleDeleteProduct(product.id)}>Continuar</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
                 </AlertDialog>
               </TableCell>
             </TableRow>

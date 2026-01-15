@@ -4,8 +4,10 @@
 import { useEffect, useState, useRef } from "react";
 import type { TikTokEmbed } from "@/lib/types";
 import { getTikTokEmbed } from "@/lib/tiktok";
-import { saveTikTokEmbed } from "@/app/actions";
+// import { saveTikTokEmbed } from "@/app/actions";
 import { useToast } from "@/hooks/use-toast";
+import { db } from "@/lib/firebase";
+import { setDoc, doc } from "firebase/firestore";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { Label } from "../ui/label";
@@ -14,25 +16,25 @@ import { Switch } from "../ui/switch";
 import { Skeleton } from "../ui/skeleton";
 
 function TikTokEmbedSkeleton() {
-    return (
-        <Card className="max-w-2xl mx-auto">
-            <CardHeader>
-                <Skeleton className="h-8 w-1/2" />
-                <Skeleton className="h-4 w-3/4" />
-            </CardHeader>
-            <CardContent className="space-y-6">
-                <div className="space-y-2">
-                    <Skeleton className="h-4 w-20" />
-                    <Skeleton className="h-24 w-full" />
-                </div>
-                <div className="flex items-center space-x-2">
-                     <Skeleton className="h-6 w-12" />
-                    <Skeleton className="h-4 w-28" />
-                </div>
-                <Skeleton className="h-10 w-32" />
-            </CardContent>
-        </Card>
-    );
+  return (
+    <Card className="max-w-2xl mx-auto">
+      <CardHeader>
+        <Skeleton className="h-8 w-1/2" />
+        <Skeleton className="h-4 w-3/4" />
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-20" />
+          <Skeleton className="h-24 w-full" />
+        </div>
+        <div className="flex items-center space-x-2">
+          <Skeleton className="h-6 w-12" />
+          <Skeleton className="h-4 w-28" />
+        </div>
+        <Skeleton className="h-10 w-32" />
+      </CardContent>
+    </Card>
+  );
 }
 
 export function TiktokEmbedForm() {
@@ -54,13 +56,21 @@ export function TiktokEmbedForm() {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (!db) return;
     setIsSubmitting(true);
-    const formData = new FormData(formRef.current!);
-    const result = await saveTikTokEmbed(formData);
-    if (result.success) {
+    try {
+      const formData = new FormData(formRef.current!);
+      const isActive = formData.get('isActive') === 'on';
+      const tiktokData = {
+        embedCode: formData.get('embedCode'),
+        isActive: isActive,
+      };
+
+      await setDoc(doc(db, "siteConfig", "tiktokEmbed"), tiktokData);
       toast({ title: "¡Éxito!", description: "Código de TikTok guardado correctamente." });
-    } else {
-      toast({ variant: "destructive", title: "Error", description: result.error });
+    } catch (error) {
+      console.error("Error saving tiktok embed:", error);
+      toast({ variant: "destructive", title: "Error", description: "No se pudo guardar el código de TikTok." });
     }
     setIsSubmitting(false);
   };
@@ -81,13 +91,13 @@ export function TiktokEmbedForm() {
         <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
             <Label htmlFor="embedCode">Código de Inserción de TikTok</Label>
-            <Textarea 
-                id="embedCode" 
-                name="embedCode" 
-                defaultValue={tiktok?.embedCode ?? ''} 
-                required 
-                placeholder='Pega el código de <blockquote class="tiktok-embed" ...>'
-                rows={8}
+            <Textarea
+              id="embedCode"
+              name="embedCode"
+              defaultValue={tiktok?.embedCode ?? ''}
+              required
+              placeholder='Pega el código de <blockquote class="tiktok-embed" ...>'
+              rows={8}
             />
           </div>
           <div className="flex items-center space-x-2">

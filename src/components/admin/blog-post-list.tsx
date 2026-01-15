@@ -4,11 +4,12 @@
 import { useEffect, useState, useRef, ChangeEvent } from "react";
 import type { BlogPost } from "@/lib/types";
 import { getBlogPosts } from "@/lib/blog";
-import { saveBlogPost, deleteBlogPost } from "@/app/actions";
+// import { saveBlogPost, deleteBlogPost } from "@/app/actions"; // Server actions removed
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
-import { getClientStorage } from "@/lib/firebase";
+import { getClientStorage, db } from "@/lib/firebase";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { collection, addDoc, updateDoc, deleteDoc, doc } from "firebase/firestore";
 import {
   Table,
   TableBody,
@@ -27,15 +28,15 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-    AlertDialogTrigger,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
@@ -63,21 +64,21 @@ function BlogPostForm({
 
     const storage = getClientStorage();
     if (!storage) {
-        toast({ variant: "destructive", title: "Error", description: "Firebase Storage no está configurado." });
-        return;
+      toast({ variant: "destructive", title: "Error", description: "Firebase Storage no está configurado." });
+      return;
     }
 
     setIsUploading(true);
     try {
-        const storageRef = ref(storage, `blog-images/${Date.now()}-${file.name}`);
-        const snapshot = await uploadBytes(storageRef, file);
-        const downloadURL = await getDownloadURL(snapshot.ref);
-        setImageUrl(downloadURL);
+      const storageRef = ref(storage, `blog-images/${Date.now()}-${file.name}`);
+      const snapshot = await uploadBytes(storageRef, file);
+      const downloadURL = await getDownloadURL(snapshot.ref);
+      setImageUrl(downloadURL);
     } catch (error) {
-        console.error("Error uploading image:", error);
-        toast({ variant: "destructive", title: "Error de Carga", description: "No se pudo subir la imagen." });
+      console.error("Error uploading image:", error);
+      toast({ variant: "destructive", title: "Error de Carga", description: "No se pudo subir la imagen." });
     } finally {
-        setIsUploading(false);
+      setIsUploading(false);
     }
   }
 
@@ -93,39 +94,39 @@ function BlogPostForm({
 
   return (
     <form ref={formRef} onSubmit={handleSubmit} className="space-y-4 max-h-[80vh] overflow-y-auto p-1 pr-4">
-        {post?.id && <input type="hidden" name="id" value={post.id} />}
-        <input type="hidden" name="image" value={imageUrl} />
-      
-        <div className="space-y-2">
-            <Label htmlFor="title">Título</Label>
-            <Input id="title" name="title" defaultValue={post?.title ?? ''} required />
+      {post?.id && <input type="hidden" name="id" value={post.id} />}
+      <input type="hidden" name="image" value={imageUrl} />
+
+      <div className="space-y-2">
+        <Label htmlFor="title">Título</Label>
+        <Input id="title" name="title" defaultValue={post?.title ?? ''} required />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="author">Autor</Label>
+        <Input id="author" name="author" defaultValue={post?.author ?? ''} required />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="content">Contenido</Label>
+        <Textarea id="content" name="content" defaultValue={post?.content ?? ''} required rows={10} />
+      </div>
+      <div className="space-y-2">
+        <Label>Imagen del Post</Label>
+        <div className="mt-2 flex flex-col items-center gap-4">
+          <Image src={imageUrl} alt={post?.title || "Imagen del post"} width={200} height={100} className="rounded-md object-cover" />
+          <Input id="newImage" type="file" accept="image/*" onChange={handleImageUpload} disabled={isUploading} />
         </div>
-        <div className="space-y-2">
-            <Label htmlFor="author">Autor</Label>
-            <Input id="author" name="author" defaultValue={post?.author ?? ''} required />
-        </div>
-        <div className="space-y-2">
-            <Label htmlFor="content">Contenido</Label>
-            <Textarea id="content" name="content" defaultValue={post?.content ?? ''} required rows={10} />
-        </div>
-        <div className="space-y-2">
-            <Label>Imagen del Post</Label>
-            <div className="mt-2 flex flex-col items-center gap-4">
-                <Image src={imageUrl} alt={post?.title || "Imagen del post"} width={200} height={100} className="rounded-md object-cover" />
-                <Input id="newImage" type="file" accept="image/*" onChange={handleImageUpload} disabled={isUploading} />
-            </div>
-        </div>
-        <div className="flex items-center gap-4">
-            <Button type="submit" disabled={isSubmitting || isUploading}>
-                {isSubmitting ? "Guardando..." : "Guardar Post"}
-            </Button>
-            {isUploading && (
-                <div className="flex items-center text-sm text-muted-foreground">
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    <span>Cargando imagen...</span>
-                </div>
-            )}
-        </div>
+      </div>
+      <div className="flex items-center gap-4">
+        <Button type="submit" disabled={isSubmitting || isUploading}>
+          {isSubmitting ? "Guardando..." : "Guardar Post"}
+        </Button>
+        {isUploading && (
+          <div className="flex items-center text-sm text-muted-foreground">
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            <span>Cargando imagen...</span>
+          </div>
+        )}
+      </div>
     </form>
   );
 }
@@ -141,10 +142,10 @@ export function BlogPostList() {
   const fetchPosts = async () => {
     setIsLoading(true);
     try {
-        const postsData = await getBlogPosts();
-        setPosts(postsData);
+      const postsData = await getBlogPosts();
+      setPosts(postsData);
     } catch (error) {
-        toast({ variant: "destructive", title: "Error", description: "No se pudieron cargar los posts." });
+      toast({ variant: "destructive", title: "Error", description: "No se pudieron cargar los posts." });
     }
     setIsLoading(false);
   };
@@ -154,22 +155,52 @@ export function BlogPostList() {
   }, []);
 
   const handleSavePost = async (formData: FormData) => {
-    const result = await saveBlogPost(formData);
-    if (result.success) {
-      toast({ title: "¡Éxito!", description: "Post guardado correctamente." });
+    if (!db) {
+      toast({ variant: "destructive", title: "Error", description: "Firestore no está inicializado." });
+      return;
+    }
+
+    try {
+      const id = formData.get('id') as string | null;
+      const title = formData.get('title') as string;
+      const author = formData.get('author') as string;
+      const content = formData.get('content') as string;
+      const image = formData.get('image') as string;
+
+      const postData = {
+        title,
+        author,
+        content,
+        image,
+        updatedAt: new Date(),
+      };
+
+      if (id) {
+        await updateDoc(doc(db, "blogPosts", id), postData);
+        toast({ title: "¡Éxito!", description: "Post actualizado correctamente." });
+      } else {
+        await addDoc(collection(db, "blogPosts"), {
+          ...postData,
+          createdAt: new Date(),
+        });
+        toast({ title: "¡Éxito!", description: "Post creado correctamente." });
+      }
       fetchPosts();
-    } else {
-      toast({ variant: "destructive", title: "Error", description: result.error });
+    } catch (error) {
+      console.error("Error saving post:", error);
+      toast({ variant: "destructive", title: "Error", description: "No se pudo guardar el post. Verifica tus permisos o conexión." });
     }
   };
-  
+
   const handleDeletePost = async (id: string) => {
-    const result = await deleteBlogPost(id);
-    if (result.success) {
-        toast({ title: "¡Éxito!", description: "Post eliminado correctamente." });
-        fetchPosts();
-    } else {
-        toast({ variant: "destructive", title: "Error", description: result.error });
+    if (!db) return;
+    try {
+      await deleteDoc(doc(db, "blogPosts", id));
+      toast({ title: "¡Éxito!", description: "Post eliminado correctamente." });
+      fetchPosts();
+    } catch (error) {
+      console.error("Error deleting post:", error);
+      toast({ variant: "destructive", title: "Error", description: "No se pudo eliminar el post." });
     }
   };
 
@@ -185,19 +216,19 @@ export function BlogPostList() {
 
   if (isLoading) {
     return (
-        <div className="space-y-4">
-            <div className="flex justify-end">
-                <Skeleton className="h-10 w-40" />
-            </div>
-            <Skeleton className="h-64 w-full" />
+      <div className="space-y-4">
+        <div className="flex justify-end">
+          <Skeleton className="h-10 w-40" />
         </div>
+        <Skeleton className="h-64 w-full" />
+      </div>
     );
   }
 
   return (
     <div>
       <div className="flex justify-end mb-4">
-        <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if(!open) setEditingPost(undefined)}}>
+        <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) setEditingPost(undefined) }}>
           <DialogTrigger asChild>
             <Button onClick={openNewPostDialog}>Añadir Post</Button>
           </DialogTrigger>
@@ -227,23 +258,23 @@ export function BlogPostList() {
                   <Edit className="h-4 w-4" />
                 </Button>
                 <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                        <AlertDialogHeader>
-                        <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            Esta acción no se puede deshacer. Esto eliminará permanentemente el post del blog.
-                        </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => handleDeletePost(post.id)}>Continuar</AlertDialogAction>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="ghost" size="icon">
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Esta acción no se puede deshacer. Esto eliminará permanentemente el post del blog.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => handleDeletePost(post.id)}>Continuar</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
                 </AlertDialog>
               </TableCell>
             </TableRow>

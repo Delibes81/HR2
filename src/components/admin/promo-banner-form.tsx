@@ -4,8 +4,10 @@
 import { useEffect, useState, useRef } from "react";
 import type { PromoBanner } from "@/lib/types";
 import { getPromoBanner } from "@/lib/promo-banner";
-import { savePromoBanner } from "@/app/actions";
+// import { savePromoBanner } from "@/app/actions";
 import { useToast } from "@/hooks/use-toast";
+import { db } from "@/lib/firebase";
+import { setDoc, doc } from "firebase/firestore";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { Label } from "../ui/label";
@@ -14,29 +16,29 @@ import { Switch } from "../ui/switch";
 import { Skeleton } from "../ui/skeleton";
 
 function PromoBannerSkeleton() {
-    return (
-        <Card className="max-w-2xl mx-auto">
-            <CardHeader>
-                <Skeleton className="h-8 w-1/2" />
-                <Skeleton className="h-4 w-3/4" />
-            </CardHeader>
-            <CardContent className="space-y-6">
-                <div className="space-y-2">
-                    <Skeleton className="h-4 w-20" />
-                    <Skeleton className="h-10 w-full" />
-                </div>
-                 <div className="space-y-2">
-                    <Skeleton className="h-4 w-24" />
-                    <Skeleton className="h-10 w-full" />
-                </div>
-                <div className="flex items-center space-x-2">
-                     <Skeleton className="h-6 w-12" />
-                    <Skeleton className="h-4 w-28" />
-                </div>
-                <Skeleton className="h-10 w-32" />
-            </CardContent>
-        </Card>
-    );
+  return (
+    <Card className="max-w-2xl mx-auto">
+      <CardHeader>
+        <Skeleton className="h-8 w-1/2" />
+        <Skeleton className="h-4 w-3/4" />
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-20" />
+          <Skeleton className="h-10 w-full" />
+        </div>
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-10 w-full" />
+        </div>
+        <div className="flex items-center space-x-2">
+          <Skeleton className="h-6 w-12" />
+          <Skeleton className="h-4 w-28" />
+        </div>
+        <Skeleton className="h-10 w-32" />
+      </CardContent>
+    </Card>
+  );
 }
 
 export function PromoBannerForm() {
@@ -45,7 +47,7 @@ export function PromoBannerForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const formRef = useRef<HTMLFormElement>(null);
-  
+
   const [bgColor, setBgColor] = useState('');
   const [textColor, setTextColor] = useState('');
 
@@ -63,13 +65,24 @@ export function PromoBannerForm() {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (!db) return;
     setIsSubmitting(true);
-    const formData = new FormData(formRef.current!);
-    const result = await savePromoBanner(formData);
-    if (result.success) {
+    try {
+      const formData = new FormData(formRef.current!);
+      const isActive = formData.get('isActive') === 'on';
+      const bannerData = {
+        text: formData.get('text'),
+        link: formData.get('link'),
+        isActive: isActive,
+        backgroundColor: formData.get('backgroundColor'),
+        textColor: formData.get('textColor'),
+      };
+
+      await setDoc(doc(db, "siteConfig", "promoBanner"), bannerData);
       toast({ title: "¡Éxito!", description: "Banner guardado correctamente." });
-    } else {
-      toast({ variant: "destructive", title: "Error", description: result.error });
+    } catch (error) {
+      console.error("Error saving promo banner:", error);
+      toast({ variant: "destructive", title: "Error", description: "No se pudo guardar el banner." });
     }
     setIsSubmitting(false);
   };
@@ -90,7 +103,7 @@ export function PromoBannerForm() {
         <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
             <Label htmlFor="text">Texto del Banner</Label>
-            <Input id="text" name="text" defaultValue={banner?.text ?? ''} required placeholder="Ej: ¡Envío gratis en todos los pedidos!"/>
+            <Input id="text" name="text" defaultValue={banner?.text ?? ''} required placeholder="Ej: ¡Envío gratis en todos los pedidos!" />
           </div>
           <div className="space-y-2">
             <Label htmlFor="link">Enlace (Opcional)</Label>
@@ -98,32 +111,32 @@ export function PromoBannerForm() {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-                <Label htmlFor="backgroundColor">Color de Fondo (Hex)</Label>
-                <div className="flex items-center gap-2">
-                    <Input 
-                        id="backgroundColor" 
-                        name="backgroundColor" 
-                        value={bgColor}
-                        onChange={(e) => setBgColor(e.target.value)}
-                        required 
-                        placeholder="#29ABE2"
-                    />
-                    <div className="w-8 h-8 rounded-md border" style={{ backgroundColor: bgColor }}></div>
-                </div>
+              <Label htmlFor="backgroundColor">Color de Fondo (Hex)</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  id="backgroundColor"
+                  name="backgroundColor"
+                  value={bgColor}
+                  onChange={(e) => setBgColor(e.target.value)}
+                  required
+                  placeholder="#29ABE2"
+                />
+                <div className="w-8 h-8 rounded-md border" style={{ backgroundColor: bgColor }}></div>
+              </div>
             </div>
-             <div className="space-y-2">
-                <Label htmlFor="textColor">Color de Texto (Hex)</Label>
-                 <div className="flex items-center gap-2">
-                    <Input 
-                        id="textColor" 
-                        name="textColor" 
-                        value={textColor}
-                        onChange={(e) => setTextColor(e.target.value)}
-                        required 
-                        placeholder="#FFFFFF"
-                    />
-                     <div className="w-8 h-8 rounded-md border" style={{ backgroundColor: textColor }}></div>
-                </div>
+            <div className="space-y-2">
+              <Label htmlFor="textColor">Color de Texto (Hex)</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  id="textColor"
+                  name="textColor"
+                  value={textColor}
+                  onChange={(e) => setTextColor(e.target.value)}
+                  required
+                  placeholder="#FFFFFF"
+                />
+                <div className="w-8 h-8 rounded-md border" style={{ backgroundColor: textColor }}></div>
+              </div>
             </div>
           </div>
           <div className="flex items-center space-x-2">

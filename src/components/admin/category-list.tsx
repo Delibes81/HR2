@@ -3,9 +3,11 @@
 import { useEffect, useState, useRef } from "react";
 import type { Category } from "@/lib/types";
 import { getAdminCategories } from "@/lib/products";
-import { saveCategory, deleteCategory } from "@/app/actions";
+// import { saveCategory, deleteCategory } from "@/app/actions";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
+import { db, uploadFile } from "@/lib/firebase";
+import { collection, addDoc, updateDoc, deleteDoc, doc } from "firebase/firestore";
 import {
   Table,
   TableBody,
@@ -24,15 +26,15 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-    AlertDialogTrigger,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
@@ -63,7 +65,7 @@ function CategoryForm({
     <form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
       {category?.id && <input type="hidden" name="id" value={category.id} />}
       {category?.logo && <input type="hidden" name="existingLogo" value={category.logo} />}
-      
+
       <div className="space-y-2">
         <Label htmlFor="name">Nombre</Label>
         <Input id="name" name="name" defaultValue={category?.name ?? ''} required />
@@ -72,14 +74,14 @@ function CategoryForm({
       <div className="space-y-2">
         <Label htmlFor="logo">Logo</Label>
         {category?.logo && (
-            <div className="my-2">
-                <p className="text-sm text-muted-foreground mb-2">Logo actual:</p>
-                <Image src={category.logo} alt={category.name} width={100} height={40} className="rounded-md object-contain h-10" />
-            </div>
+          <div className="my-2">
+            <p className="text-sm text-muted-foreground mb-2">Logo actual:</p>
+            <Image src={category.logo} alt={category.name} width={100} height={40} className="rounded-md object-contain h-10" />
+          </div>
         )}
         <Input id="logo" name="logo" type="file" accept="image/*" />
         <p className="text-xs text-muted-foreground">
-            {category?.logo ? 'Sube un nuevo archivo para reemplazar el logo actual.' : 'Sube un archivo de imagen.'}
+          {category?.logo ? 'Sube un nuevo archivo para reemplazar el logo actual.' : 'Sube un archivo de imagen.'}
         </p>
       </div>
 
@@ -103,10 +105,10 @@ export function CategoryList() {
   const fetchCategories = async () => {
     setIsLoading(true);
     try {
-        const categoriesData = await getAdminCategories();
-        setCategories(categoriesData);
+      const categoriesData = await getAdminCategories();
+      setCategories(categoriesData);
     } catch (error) {
-        toast({ variant: "destructive", title: "Error", description: "No se pudieron cargar las categorías." });
+      toast({ variant: "destructive", title: "Error", description: "No se pudieron cargar las categorías." });
     }
     setIsLoading(false);
   };
@@ -116,22 +118,49 @@ export function CategoryList() {
   }, []);
 
   const handleSaveCategory = async (formData: FormData) => {
-    const result = await saveCategory(formData);
-    if (result.success) {
-      toast({ title: "¡Éxito!", description: "Categoría guardada correctamente." });
+    if (!db) return;
+
+    try {
+      const id = formData.get('id') as string | null;
+      const name = formData.get('name') as string;
+      const order = parseInt(formData.get('order') as string || '0');
+      const logoFile = formData.get('logo') as File | null;
+      const existingLogo = formData.get('existingLogo') as string || '';
+
+      let logoUrl = existingLogo;
+      if (logoFile && logoFile.size > 0) {
+        logoUrl = await uploadFile(logoFile, 'category-logos');
+      }
+
+      const categoryData = {
+        name,
+        logo: logoUrl,
+        order,
+      };
+
+      if (id) {
+        await updateDoc(doc(db, "categories", id), categoryData);
+        toast({ title: "¡Éxito!", description: "Categoría actualizada correctamente." });
+      } else {
+        await addDoc(collection(db, "categories"), categoryData);
+        toast({ title: "¡Éxito!", description: "Categoría creada correctamente." });
+      }
       fetchCategories();
-    } else {
-      toast({ variant: "destructive", title: "Error", description: result.error });
+    } catch (error) {
+      console.error("Error saving category:", error);
+      toast({ variant: "destructive", title: "Error", description: "No se pudo guardar la categoría." });
     }
   };
-  
+
   const handleDeleteCategory = async (id: string) => {
-    const result = await deleteCategory(id);
-    if (result.success) {
-        toast({ title: "¡Éxito!", description: "Categoría eliminada correctamente." });
-        fetchCategories();
-    } else {
-        toast({ variant: "destructive", title: "Error", description: result.error });
+    if (!db) return;
+    try {
+      await deleteDoc(doc(db, "categories", id));
+      toast({ title: "¡Éxito!", description: "Categoría eliminada correctamente." });
+      fetchCategories();
+    } catch (error) {
+      console.error("Error deleting category:", error);
+      toast({ variant: "destructive", title: "Error", description: "No se pudo eliminar la categoría." });
     }
   };
 
@@ -147,19 +176,19 @@ export function CategoryList() {
 
   if (isLoading) {
     return (
-        <div className="space-y-4">
-            <div className="flex justify-end">
-                <Skeleton className="h-10 w-40" />
-            </div>
-            <Skeleton className="h-64 w-full" />
+      <div className="space-y-4">
+        <div className="flex justify-end">
+          <Skeleton className="h-10 w-40" />
         </div>
+        <Skeleton className="h-64 w-full" />
+      </div>
     );
   }
 
   return (
     <div>
       <div className="flex justify-end mb-4">
-        <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if(!open) setEditingCategory(undefined)}}>
+        <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) setEditingCategory(undefined) }}>
           <DialogTrigger asChild>
             <Button onClick={openNewCategoryDialog}>Añadir Categoría</Button>
           </DialogTrigger>
@@ -184,7 +213,7 @@ export function CategoryList() {
           {categories.map((category) => (
             <TableRow key={category.id}>
               <TableCell>
-                {category.logo && <Image src={category.logo} alt={category.name} width={100} height={40} className="object-contain h-10"/>}
+                {category.logo && <Image src={category.logo} alt={category.name} width={100} height={40} className="object-contain h-10" />}
               </TableCell>
               <TableCell className="font-medium">{category.name}</TableCell>
               <TableCell>{category.order}</TableCell>
@@ -193,23 +222,23 @@ export function CategoryList() {
                   <Edit className="h-4 w-4" />
                 </Button>
                 <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                        <AlertDialogHeader>
-                        <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            Esta acción no se puede deshacer. Esto eliminará permanentemente la categoría. Los productos asociados no se eliminarán.
-                        </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => handleDeleteCategory(category.id)}>Continuar</AlertDialogAction>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="ghost" size="icon">
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Esta acción no se puede deshacer. Esto eliminará permanentemente la categoría. Los productos asociados no se eliminarán.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => handleDeleteCategory(category.id)}>Continuar</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
                 </AlertDialog>
               </TableCell>
             </TableRow>

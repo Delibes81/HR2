@@ -4,8 +4,10 @@
 import { useEffect, useState, useRef } from "react";
 import type { FaqItem } from "@/lib/types";
 import { getFaqs } from "@/lib/faq";
-import { saveFaq, deleteFaq } from "@/app/actions";
+// import { saveFaq, deleteFaq } from "@/app/actions";
 import { useToast } from "@/hooks/use-toast";
+import { db } from "@/lib/firebase";
+import { collection, addDoc, updateDoc, deleteDoc, doc } from "firebase/firestore";
 import {
   Table,
   TableBody,
@@ -24,15 +26,15 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-    AlertDialogTrigger,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
@@ -62,21 +64,21 @@ function FaqForm({
 
   return (
     <form ref={formRef} onSubmit={handleSubmit} className="space-y-4 max-h-[80vh] overflow-y-auto p-1 pr-4">
-        {faq?.id && <input type="hidden" name="id" value={faq.id} />}
-        
-        <div className="space-y-2">
-            <Label htmlFor="order">Orden</Label>
-            <Input id="order" name="order" type="number" defaultValue={faq?.order ?? 0} required />
-        </div>
-        <div className="space-y-2">
-            <Label htmlFor="question">Pregunta</Label>
-            <Input id="question" name="question" defaultValue={faq?.question ?? ''} required />
-        </div>
-        <div className="space-y-2">
-            <Label htmlFor="answer">Respuesta</Label>
-            <Textarea id="answer" name="answer" defaultValue={faq?.answer ?? ''} required rows={5} />
-        </div>
-        <Button type="submit" disabled={isSubmitting}>{isSubmitting ? "Guardando..." : "Guardar Pregunta"}</Button>
+      {faq?.id && <input type="hidden" name="id" value={faq.id} />}
+
+      <div className="space-y-2">
+        <Label htmlFor="order">Orden</Label>
+        <Input id="order" name="order" type="number" defaultValue={faq?.order ?? 0} required />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="question">Pregunta</Label>
+        <Input id="question" name="question" defaultValue={faq?.question ?? ''} required />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="answer">Respuesta</Label>
+        <Textarea id="answer" name="answer" defaultValue={faq?.answer ?? ''} required rows={5} />
+      </div>
+      <Button type="submit" disabled={isSubmitting}>{isSubmitting ? "Guardando..." : "Guardar Pregunta"}</Button>
     </form>
   );
 }
@@ -92,10 +94,10 @@ export function FaqList() {
   const fetchFaqs = async () => {
     setIsLoading(true);
     try {
-        const faqsData = await getFaqs();
-        setFaqs(faqsData);
+      const faqsData = await getFaqs();
+      setFaqs(faqsData);
     } catch (error) {
-        toast({ variant: "destructive", title: "Error", description: "No se pudieron cargar las preguntas frecuentes." });
+      toast({ variant: "destructive", title: "Error", description: "No se pudieron cargar las preguntas frecuentes." });
     }
     setIsLoading(false);
   };
@@ -105,22 +107,42 @@ export function FaqList() {
   }, []);
 
   const handleSaveFaq = async (formData: FormData) => {
-    const result = await saveFaq(formData);
-    if (result.success) {
-      toast({ title: "¡Éxito!", description: "Pregunta guardada correctamente." });
+    if (!db) return;
+    try {
+      const id = formData.get('id') as string | null;
+      const question = formData.get('question') as string;
+      const answer = formData.get('answer') as string;
+      const order = parseInt(formData.get('order') as string || '0');
+
+      const faqData = {
+        question,
+        answer,
+        order,
+      };
+
+      if (id) {
+        await updateDoc(doc(db, "faqs", id), faqData);
+        toast({ title: "¡Éxito!", description: "Pregunta actualizada correctamente." });
+      } else {
+        await addDoc(collection(db, "faqs"), faqData);
+        toast({ title: "¡Éxito!", description: "Pregunta creada correctamente." });
+      }
       fetchFaqs();
-    } else {
-      toast({ variant: "destructive", title: "Error", description: result.error });
+    } catch (error) {
+      console.error("Error saving FAQ:", error);
+      toast({ variant: "destructive", title: "Error", description: "No se pudo guardar la pregunta." });
     }
   };
-  
+
   const handleDeleteFaq = async (id: string) => {
-    const result = await deleteFaq(id);
-    if (result.success) {
-        toast({ title: "¡Éxito!", description: "Pregunta eliminada correctamente." });
-        fetchFaqs();
-    } else {
-        toast({ variant: "destructive", title: "Error", description: result.error });
+    if (!db) return;
+    try {
+      await deleteDoc(doc(db, "faqs", id));
+      toast({ title: "¡Éxito!", description: "Pregunta eliminada correctamente." });
+      fetchFaqs();
+    } catch (error) {
+      console.error("Error deleting FAQ:", error);
+      toast({ variant: "destructive", title: "Error", description: "No se pudo eliminar la pregunta." });
     }
   };
 
@@ -136,19 +158,19 @@ export function FaqList() {
 
   if (isLoading) {
     return (
-        <div className="space-y-4">
-            <div className="flex justify-end">
-                <Skeleton className="h-10 w-40" />
-            </div>
-            <Skeleton className="h-64 w-full" />
+      <div className="space-y-4">
+        <div className="flex justify-end">
+          <Skeleton className="h-10 w-40" />
         </div>
+        <Skeleton className="h-64 w-full" />
+      </div>
     );
   }
 
   return (
     <div>
       <div className="flex justify-end mb-4">
-        <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if(!open) setEditingFaq(undefined)}}>
+        <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) setEditingFaq(undefined) }}>
           <DialogTrigger asChild>
             <Button onClick={openNewFaqDialog}>Añadir Pregunta</Button>
           </DialogTrigger>
@@ -178,23 +200,23 @@ export function FaqList() {
                   <Edit className="h-4 w-4" />
                 </Button>
                 <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                        <AlertDialogHeader>
-                        <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            Esta acción no se puede deshacer. Esto eliminará permanentemente la pregunta frecuente.
-                        </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => handleDeleteFaq(faq.id)}>Continuar</AlertDialogAction>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="ghost" size="icon">
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Esta acción no se puede deshacer. Esto eliminará permanentemente la pregunta frecuente.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => handleDeleteFaq(faq.id)}>Continuar</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
                 </AlertDialog>
               </TableCell>
             </TableRow>
