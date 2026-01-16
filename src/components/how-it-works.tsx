@@ -88,10 +88,10 @@ export function HowItWorks() {
 
   return (
     <section
-      className="relative w-full py-20 md:py-32 overflow-hidden"
-      style={{ backgroundColor: '#252525' }}
+      className="relative w-full py-20 md:py-32 overflow-hidden bg-cover bg-center min-h-[700px]"
+      style={{ backgroundImage: "url('/images/psychedelic_bg.png')" }}
     >
-      {/* <div className="absolute inset-0 bg-neutral-900/80 z-0 backdrop-blur-[2px]"></div> */}
+      <div className="absolute inset-0 bg-[#1a1a1a]/85 z-0 backdrop-blur-[1px]"></div>
       <div className="relative container mx-auto px-4 md:px-6 z-10">
 
         {/* Header Section */}
@@ -129,8 +129,8 @@ export function HowItWorks() {
                 {/* Circular Card Container */}
                 <div
                   className={cn(
-                    "w-full h-full rounded-full p-4 flex flex-col items-center justify-center text-center backdrop-blur-md border transition-colors duration-500 relative overflow-visible z-10",
-                    isActive ? "border-white/40 shadow-[0_0_30px_rgba(255,255,255,0.1)]" : "bg-white/5 border-white/10 hover:bg-white/10"
+                    "w-full h-full rounded-full p-4 flex flex-col items-center justify-center text-center backdrop-blur-md transition-colors duration-500 relative overflow-visible z-10",
+                    isActive ? "shadow-[0_0_30px_rgba(255,255,255,0.1)]" : "bg-white/5 hover:bg-white/10"
                   )}
                 >
                   {/* Active Gradient Background Layer */}
